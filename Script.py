@@ -3,6 +3,8 @@ from PIL import Image, ImageOps
 from PIL.ExifTags import TAGS, GPSTAGS
 from prettytable import PrettyTable
 import os
+import googlemaps
+from datetime import datetime
 
 #Hex Data
 def HexView(img):
@@ -95,4 +97,10 @@ def printMetaData(ruta):
     with open(N + '.txt', 'w') as w:
         w.write(str(table))
         w.close
-    
+
+#Using de information
+def MapsApi():
+    key = googlemaps.Client(key='AIzaSyBDfz-d-9pEGkVNxZKDKE6VfCC9p0yxtx4')
+    geocode_result = key.reverse_geocode((25.7789497375, -100.33634185777778))[0]
+    print(geocode_result['formatted_address'])
+

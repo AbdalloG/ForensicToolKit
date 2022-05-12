@@ -8,5 +8,6 @@ os.chdir(path)
 '''for file in os.listdir():
     #HMeta(file)
     #HexView(file)'''
-printMetaData(path)
+#printMetaData(path)
+MapsApi()
 
