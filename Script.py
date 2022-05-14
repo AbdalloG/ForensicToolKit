@@ -1,33 +1,26 @@
 from re import L
+from secrets import choice
 from PIL import Image, ImageOps
 from PIL.ExifTags import TAGS, GPSTAGS
-from prettytable import PrettyTable
 import os
 import googlemaps
-from datetime import datetime
+from csv import writer
+import cv2
+import base64
 
-#Hex Data
-def HexView(img):
-    f = open(img,'rb')
-    fcontents = f.read()
-    bytes = 0
-    line = []
-    for by in fcontents:
-        bytes = bytes + 1
-        line.append(by)
-        print("{0:0{1}x}".format(by,2), end=" ")
-        if bytes % 16 == 0:
-            print("#", end="")
-            for by2 in line:
-                if (by2 >= 32) and (by2 <= 126):
-                    print(chr(by2), end="")
-                else:
-                    print("*", end="")
-            line=[]
-            print("")
+#Base64 Data
+def B64E(img):
+    path = 'D:/Perfil/Abdall/Escritorio/Tareas/Rashid/4to Semestre/Programacion Para Ciberseguridad/PIA/ImagesB64/'
+    with open(img, "rb") as img_file:
+        b64_string = base64.b64encode(img_file.read())
+        N = img.rsplit('.', 1)[0]
+        with open(path+'B64'+N+'.txt', 'a', newline='') as w:
+            w.write(b64_string.decode('utf-8'))
+            w.close
 
 #Stripp Meta
 def HMeta(img):
+    path = 'D:/Perfil/Abdall/Escritorio/Tareas/Rashid/4to Semestre/Programacion Para Ciberseguridad/PIA/ImagesSM/'
     try:
         original = Image.open(img) 
     except IOError:
@@ -36,7 +29,7 @@ def HMeta(img):
     original = ImageOps.exif_transpose(original) #Verifica que existe EXIF
     stripped = Image.new(original.mode, original.size) #Creamos una nueva imagen ya sin EXIF
     stripped.putdata(list(original.getdata()))
-    stripped.save("SM"+img)
+    stripped.save(f"{path}""SM"+img)
 
 
 #Start EXIF
@@ -63,6 +56,13 @@ def decode_gps_info(exif):
     else:
             print ("Sin Metadata")
 
+def MapsApi(geo):
+    key = googlemaps.Client(key='AIzaSyBDfz-d-9pEGkVNxZKDKE6VfCC9p0yxtx4')
+    Lat = geo['GPSInfo']['Lat']
+    Lng = geo['GPSInfo']['Lng']
+    geocode_result = key.reverse_geocode((Lat, Lng))[0]
+    geo['Direccion'] = {geocode_result['formatted_address']}
+
 def Meta(img):
     data = {}
     try:
@@ -77,30 +77,47 @@ def Meta(img):
                 tag_n = TAGS.get(tag, tag)
                 data[tag_n] = value
     decode_gps_info(data)
+    MapsApi(data)
     return data
 
 def printMetaData(ruta):
-    table = PrettyTable()
-    table.field_names = ["Tags", "Values"]
+    path = 'D:/Perfil/Abdall/Escritorio/Tareas/Rashid/4to Semestre/Programacion Para Ciberseguridad/PIA/Reportes/'
     os.chdir(ruta)
     for root, dirs, files in os.walk(".", topdown=False):   
         for name in files:
             try:
-                exifData = {}
-                exif = Meta(name)
-                for metadata in exif:
-                    table.add_row([metadata, exif[metadata]])
+                N = name.rsplit('.', 1)[0]+'.csv'
+                with open(path+N, 'a', newline='') as w:
+                    object = writer(w)
+                    object.writerow(["Tags", "Values"])
+                    try:
+                        exifData = {}
+                        exif = Meta(name)
+                        for metadata in exif:
+                            object.writerow([metadata, exif[metadata]])
+                            w.close
+                    except:
+                        import sys, traceback
+                        traceback.print_exc(file=sys.stdout)
             except:
-                import sys, traceback
-                traceback.print_exc(file=sys.stdout)
-    N = name.rsplit('.', 1)[0]
-    with open(N + '.txt', 'w') as w:
-        w.write(str(table))
-        w.close
+                continue
 
-#Using de information
-def MapsApi():
-    key = googlemaps.Client(key='AIzaSyBDfz-d-9pEGkVNxZKDKE6VfCC9p0yxtx4')
-    geocode_result = key.reverse_geocode((25.7789497375, -100.33634185777778))[0]
-    print(geocode_result['formatted_address'])
-
+#
+def Hide(file1, file2):
+    img1 = cv2.imread(file1) 
+    img2 = cv2.imread(file2)
+    scale_percent = 50
+    width = int(img2.shape[1] * scale_percent / 100)
+    height = int(img2.shape[0] * scale_percent / 100)
+    dsize = (width, height)
+    output = cv2.resize(img2, dsize)
+    cv2.imwrite("D:/Perfil/Abdall/Escritorio/Tareas/Rashid/4to Semestre/Programacion Para Ciberseguridad/PIA/Steganography/rezice.jpg", output)
+    img3 = cv2.imread("D:/Perfil/Abdall/Escritorio/Tareas/Rashid/4to Semestre/Programacion Para Ciberseguridad/PIA/Steganography/rezice.jpg")
+    for i in range(img3.shape[0]): 
+        for j in range(img3.shape[1]): 
+            for l in range(3): 
+                v1 = format(img1[i][j][l], '08b') 
+                v2 = format(img3[i][j][l], '08b')
+                v3 = v1[:4] + v2[:4]  
+                img1[i][j][l]= int(v3, 2) 
+    cv2.imwrite('imagehide.jpg', img1) 
