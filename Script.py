@@ -57,7 +57,7 @@ def decode_gps_info(exif):
             print ("Sin Metadata")
 
 def MapsApi(geo):
-    key = googlemaps.Client(key='AIzaSyBDfz-d-9pEGkVNxZKDKE6VfCC9p0yxtx4')
+    key = googlemaps.Client(key='')
     Lat = geo['GPSInfo']['Lat']
     Lng = geo['GPSInfo']['Lng']
     geocode_result = key.reverse_geocode((Lat, Lng))[0]
